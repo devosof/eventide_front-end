@@ -1,17 +1,17 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-// ==================== API Configuration ====================
-const API_BASE_URL = 'http://localhost:3000';
+// // ==================== API Configuration ====================
+export const API_BASE_URL = 'http://localhost:3000';
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
+  // console.log("access token fetched from local storage", token)
+  console.log(api.interceptors.request)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

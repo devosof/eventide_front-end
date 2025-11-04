@@ -1,21 +1,34 @@
 // ==================== Types ====================
-interface User {
+export interface User {
   id: number;
   name: string;
   email: string;
   role: 'ATTENDEE' | 'ORGANIZER';
-  organizerProfile?: {
-    id: number;
-    organizationName: string;
-    address: string;
-    city: string;
-    state: string;
-    country: string;
-    zipCode: string;
-  };
+  organizerProfile?: OrganizerProfile
 }
 
+export interface OrganizerProfile {
+  id: number;
+  organizationName: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string;
+}
 
+export interface Category {
+  id: number;
+  name: string;
+}
+
+export interface Ticket {
+  id: number;
+  name: string;
+  price: number;
+  salesStartDate: string;
+  salesEndDate: string;
+}
 
 
 export interface Event {
@@ -29,12 +42,7 @@ export interface Event {
     id: number;
     name: string;
     email: string;
-    organizerProfile?: {
-      organizationName: string;
-      city: string;
-      state: string;
-      country: string;
-    };
+    organizerProfile?: OrganizerProfile
   };
   location: {
     id: number;
@@ -46,20 +54,49 @@ export interface Event {
     googleMapsLink?: string;
   };
   images: { id: number; imageUrl: string }[];
-  tickets?: { id: number; name: string; price: number; salesStartDate: string; salesEndDate: string }[];
-  categories: { id: number; name: string }[];
+  tickets?: Ticket[];
+  categories: Category[];
   createdAt: string;
 }
 
-interface Review {
+export interface Review {
   id: number;
   rating: number;
   comment: string;
   reviewer: { id: number; name: string };
+  event: {
+    id: number;
+    name: string;
+    startDate: string;
+    city: string;
+    images: { id: number; imageUrl: string }[];
+  };
   createdAt: string;
 }
 
-interface Category {
+export interface Booking {
   id: number;
-  name: string;
+  status: string;
+  user: { id: number; name: string; email: string };
+  event: {
+    id: number;
+    name: string;
+    startDate: string;
+    endDate: string;
+    city: string;
+    images: { id: number; imageUrl: string }[];
+  };
+  ticket: { id: number; name: string; price: number };
+  bookingDate: string;
 }
+
+export interface BookingResponse{
+  items:Booking[];
+  total: number;
+  page:number;
+  limit: number;
+  pages: number;
+}
+
+
+

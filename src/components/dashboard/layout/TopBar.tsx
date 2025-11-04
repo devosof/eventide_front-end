@@ -19,7 +19,7 @@ const TopBar = () => {
   return (
 
     <header className="flex items-center justify-between px-6 py-3 border-b border-default-200 bg-background sticky top-0 z-40">
-      <h1 className="text-xl font-semibold text-foreground">Organizer Dashboard</h1>
+      <h1 className="text-xl font-semibold text-foreground">{user?.role} Dashboard</h1>
       <div className="flex items-center gap-4">
         <Button isIconOnly variant="light" className="rounded-full">
           <BellIcon size={18} />
@@ -40,9 +40,9 @@ const TopBar = () => {
               <p className="font-semibold">{user?.name}</p>
               <p className="text-xs text-default-500">{user?.email}</p>
             </DropdownItem>
-            <DropdownItem key="settings" onClick={() => navigate("/dashboard/settings")}>
+            {/* <DropdownItem key="settings" onClick={() => navigate("/dashboard/settings")}>
               Settings
-            </DropdownItem>
+            </DropdownItem> */}
             <DropdownItem key="home" color="primary" onClick={() => navigate("/")}>
               Go to Website
             </DropdownItem>

@@ -2,7 +2,7 @@ import { Chip } from "@heroui/react"
 
 interface StatusBadgeProps {
   status: "selling-fast" | "on-sale" | "sold-out" | "pending" | "completed"
-  variant?: "filled" | "bordered"
+  variant?: "bordered" | "flat"
 }
 
 export function StatusBadge({ status, variant = "bordered" }: StatusBadgeProps) {

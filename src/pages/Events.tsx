@@ -1,109 +1,71 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Pagination } from "@heroui/react";
 import EventGrid from "@/components/home/EventGrid";
 import SearchBar from "@/components/home/SearchBar";
-
-
-// interface EventResponse {
-//   items: EventResponseDto[]; 
-//   total: number; 
-//   page: number; 
-//   limit: number; 
-//   pages: number; 
-// }
-
+import { api } from "@/api/api";
 
 const BASE_API_URL = "http://localhost:3000";
 
 const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  // 🔹 Read query params
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const searchParam = searchParams.get("search") || "";
+
+  // 🔹 Local state
+  const [searchTerm, setSearchTerm] = useState(searchParam);
   const [filteredEvents, setFilteredEvents] = useState([]);
-
-  const queryParams = Object.fromEntries(searchParams.entries());
-
-  console.log("Query Params:", queryParams);
-  const { page, limit, search, city, categoryId, startDate, endDate } =
-    queryParams;
-  const pageParam = page ? parseInt(page, 10) : 1;
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(pageParam);
-  const [totalPages, setTotalPages] = useState<number | null>(null);
-  const [apiQuery, setApiQuery] = useState("");
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalEvents, setTotalEvents] = useState<number>(0)
 
-  // Sync state from URL
-  // useEffect(() => {
-  //   if (query) setSearchTerm(query);
-  //   setCurrentPage(pageParam);
-  // }, [query, pageParam]);
-
-  // Filter events based on search term
-  // const filteredEvents = useMemo(() => {
-  //   let filtered = [...mockEventCards];
-  //   if (searchTerm.trim()) {
-  //     const q = searchTerm.toLowerCase();
-  //     setLoading(true);
-
-  //     filtered = filtered.filter(
-  //       (event) =>
-  //         event.title.toLowerCase().includes(q) ||
-  //         event.description.toLowerCase().includes(q) ||
-  //         event.location?.toLowerCase().includes(q) ||
-  //         event.category?.toLowerCase().includes(q)
-  //     );
-  //     setLoading(false);
-
-  //   }
-  //   return filtered;
-  // }, [searchTerm]);
-
-  // Simulate fetching / filtering delay
+  // 🔹 Keep URL in sync with state
   useEffect(() => {
-    if(search){
-      setSearchTerm(search);
-      setApiQuery(new URLSearchParams({
-        search: search,
-        page: currentPage.toString(),
-      }).toString());
-    }
-    async function fetchEvents(){
+    const params: Record<string, string> = {};
+    if (searchTerm) params.search = searchTerm;
+    params.page = currentPage.toString();
+    setSearchParams(params);
+  }, [searchTerm, currentPage]);
+
+  // 🔹 Fetch events from API
+  useEffect(() => {
+    const fetchEvents = async () => {
       setLoading(true);
-        try {
-          const eventsResponse = await fetch(`${BASE_API_URL}/events?${apiQuery}`);
-          console.log(eventsResponse)
-
-          const eventsData = await eventsResponse.json();
-
-          setFilteredEvents(eventsData?.items);
-          setTotalPages(eventsData?.pages);
-        } catch (error) {
-          console.error("Error fetching events:", error);
-          throw error;
-        }
-      }
-      if (searchTerm){
-        setApiQuery(new URLSearchParams({
+      try {
+        const query = new URLSearchParams({
           search: searchTerm,
           page: currentPage.toString(),
-        }).toString());
+        }).toString();
+
+        const res = await api.get(`${BASE_API_URL}/events?${query}`);
+        console.log("Events fetched ", res.data)
+        const data = await res.data;
+
+        setFilteredEvents(data?.items || []);
+        setTotalPages(data?.pages || 1);
+        setTotalEvents(data?.total)
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-    fetchEvents().finally(() => setLoading(false));
-  }, [searchTerm, currentPage, apiQuery]);
+    fetchEvents();
+  }, [searchTerm, currentPage]);
 
-  // Handlers
+  // 🔹 Search handler
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    setCurrentPage(1);
-    setSearchParams(term ? { search: term, page: "1" } : { page: "1" });
+    setCurrentPage(1); // reset to first page
   };
 
+  // 🔹 Pagination handler
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    const params: Record<string, string> = { page: page.toString() };
-    if (searchTerm) params.query = searchTerm;
-    setSearchParams(params);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -117,7 +79,7 @@ const Events = () => {
         </p>
       </div>
 
-      {/* Search */}
+      {/* Search Bar */}
       <SearchBar
         query={searchTerm}
         onChange={handleSearch}
@@ -125,13 +87,20 @@ const Events = () => {
         size="lg"
       />
 
-      {/* Events Grid */}
+      {/* Header */}
+      <div className="flex justify-between items-center mt-8">
+        <div>
+          <p className="text-default-500">Showing {filteredEvents.length} events out of {totalEvents}</p>
+        </div>
+      </div>
+
+      {/* Event Grid */}
       <div className="mt-8">
         <EventGrid events={filteredEvents} isLoading={loading} />
       </div>
 
       {/* Pagination */}
-      {totalPages && (
+      {totalPages > 1 && (
         <div className="flex justify-center mt-10">
           <Pagination
             total={totalPages}
@@ -139,9 +108,7 @@ const Events = () => {
             onChange={handlePageChange}
             color="primary"
             showControls
-            showShadow
             size="lg"
-            loop={false}
           />
         </div>
       )}

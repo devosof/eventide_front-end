@@ -51,7 +51,7 @@ export interface EventModel {
 
 export interface Event {
   id: string
-  title: string
+  name: string
   description: string
   imageUrl: string
   date: Date

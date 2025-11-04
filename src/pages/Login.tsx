@@ -19,13 +19,12 @@ import {
   Checkbox,
 } from '@heroui/react';
 import { useAuth } from '../contexts/AuthContext';
+import { AxiosError } from 'axios';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
-
- 
 
   const [formData, setFormData] = useState({
     email: '',
@@ -64,14 +63,19 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+
+    if (!validateForm()) {
+      setErrors((prev) => ({ ...prev, submit: errors.email || errors.password ? 'Please fix the errors above' : '' }));
+      return
+    };
 
     setIsLoading(true);
     try {
       await login(formData.email, formData.password);
       navigate(from, { replace: true });
-    } catch (error) {
-      setErrors({ submit: 'Invalid email or password' });
+    } catch (error: AxiosError | any) {
+      console.log(error)
+      setErrors({ submit: `Error : ${error?.message}` });
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +120,8 @@ const Login = () => {
               )}
 
               {/* Email Input */}
+
+              
               <Input
                 type="email"
                 label="Email"

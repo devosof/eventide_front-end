@@ -1,119 +1,196 @@
-// // src/components/dashboard/OrganizerDashboard.tsx
-// import { Link } from 'react-router-dom';
-// import { Card, CardHeader, CardBody, Button, Chip, Avatar, Progress } from '@heroui/react';
-// import StatsCard from './StatsCard';
+// src/components/dashboard/OrganizerDashboard.tsx
+import { Link } from 'react-router-dom';
+import { Card, CardHeader, CardBody, Button, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip } from '@heroui/react';
+import { User } from '@/api/types';
 
-// interface OrganizerDashboardProps {
-//   user: any;
-//   stats: any;
-//   events: any[];
-// }
+interface OrganizerStats {
+  totalEvents: number;
+  totalBookings: number;
+  totalRevenue: number;
+  activeEvents: number;
+  bookingRate: number;
+  revenueProgress: number;
+}
 
-// const OrganizerDashboard = ({ user, stats, events }: OrganizerDashboardProps) => {
-//   const formatDate = (dateString: string) => {
-//     return new Date(dateString).toLocaleDateString('en-US', {
-//       month: 'short',
-//       day: 'numeric',
-//       year: 'numeric',
-//       hour: 'numeric',
-//       minute: '2-digit',
-//     });
-//   };
+interface Event {
+  id: number;
+  name: string;
+  imageUrl: string;
+  location: {
+    city: string;
+    address: string;
+  };
+  startDate: string;
+  status: string;
+  bookingsCount: number;
+  capacity: number;
+}
 
-//   return (
-//     <div className="min-h-screen bg-background py-8 px-4">
-//       <div className="max-w-7xl mx-auto">
-//         {/* Header */}
-//         <div className="mb-8">
-//           <h1 className="text-4xl font-display font-bold mb-2">
-//             Welcome, {user?.name}! 🎤
-//           </h1>
-//           <p className="text-default-500">Manage your events and track ticket sales</p>
-//         </div>
+interface OrganizerDashboardProps {
+  user: User | null;
+  stats: OrganizerStats;
+  events: Event[];
+}
 
-//         {/* Stats Cards */}
-//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-//           <StatsCard icon="🎫" value={stats.ticketsSold} label="Tickets Sold" color="primary" />
-//           <StatsCard icon="📅" value={stats.totalEvents} label="Total Events" color="secondary" />
-//           <StatsCard icon="🟢" value={stats.activeEvents} label="Active Events" color="success" />
-//           <StatsCard icon="💰" value={`$${stats.totalRevenue}`} label="Total Revenue" color="warning" />
-//           <StatsCard icon="⭐" value={stats.averageRating} label="Avg. Rating" color="primary" />
-//         </div>
+const OrganizerDashboard = ({ user, stats, events }: OrganizerDashboardProps) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
-//         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//           {/* Main Content */}
-//           <div className="lg:col-span-2 space-y-6">
-//             {/* Active Events */}
-//             <Card>
-//               <CardHeader className="flex justify-between">
-//                 <h2 className="text-2xl font-bold">Active Events</h2>
-//                 <Button as={Link} to="/organizer/events" size="sm" variant="light" color="primary">
-//                   View All
-//                 </Button>
-//               </CardHeader>
-//               <CardBody className="space-y-4">
-//                 {events.length === 0 ? (
-//                   <div className="text-center py-12">
-//                     <div className="text-6xl mb-4">📅</div>
-//                     <p className="text-default-500 mb-4">No active events yet</p>
-//                     <Button as={Link} to="/organizer/create-event" color="primary">Create Event</Button>
-//                   </div>
-//                 ) : (
-//                   events.map((event) => (
-//                     <div key={event.id} className="flex gap-4 p-4 border border-default-200 rounded-xl hover:border-primary transition-colors">
-//                       <img src={event.image} alt={event.title} className="w-24 h-24 rounded-lg object-cover" />
-//                       <div className="flex-1">
-//                         <h3 className="font-bold text-lg mb-1">{event.title}</h3>
-//                         <p className="text-sm text-default-500 mb-2">📅 {formatDate(event.date)}</p>
-//                         <div className="flex gap-2 mb-2">
-//                           <Chip size="sm" variant="flat" color="primary">{event.status}</Chip>
-//                           <Chip size="sm" variant="flat">{event.ticketsSold}/{event.totalTickets} Sold</Chip>
-//                           <Chip size="sm" color="success" variant="flat">${event.revenue}</Chip>
-//                         </div>
-//                         <Progress
-//                           value={(event.ticketsSold / event.totalTickets) * 100}
-//                           color="primary"
-//                           size="sm"
-//                         />
-//                       </div>
-//                       <div className="flex flex-col gap-2">
-//                         <Button as={Link} to={`/organizer/events/${event.id}`} size="sm" variant="bordered">Manage</Button>
-//                         <Button as={Link} to={`/events/${event.id}`} size="sm" color="primary">View Event</Button>
-//                       </div>
-//                     </div>
-//                   ))
-//                 )}
-//               </CardBody>
-//             </Card>
-//           </div>
+  return (
+    <div className="container mx-auto px-4">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          Welcome back, {user?.name || 'Organizer'}! 👋
+        </h1>
+        <p className="text-default-500">
+          Manage your events and track your performance
+        </p>
+      </div>
 
-//           {/* Sidebar */}
-//           <div className="space-y-6">
-//             {/* Profile Card */}
-//             <Card>
-//               <CardHeader><h2 className="text-xl font-bold">Organizer Profile</h2></CardHeader>
-//               <CardBody className="flex flex-col items-center gap-3">
-//                 <Avatar name={user?.name} size="lg" className="mb-2" />
-//                 <div className="font-bold text-lg">{user?.name}</div>
-//                 <Chip color="primary" variant="flat" size="sm">{user?.email}</Chip>
-//                 <Button as={Link} to="/settings" size="sm" color="primary">Edit Profile</Button>
-//               </CardBody>
-//             </Card>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card>
+          <CardBody className="text-center p-6">
+            <div className="text-3xl mb-2">🎟️</div>
+            <div className="text-2xl font-bold">{stats.totalEvents}</div>
+            <div className="text-default-500 text-sm">Total Events</div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className="text-center p-6">
+            <div className="text-3xl mb-2">👥</div>
+            <div className="text-2xl font-bold">{stats.totalBookings}</div>
+            <div className="text-default-500 text-sm">Total Bookings</div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className="text-center p-6">
+            <div className="text-3xl mb-2">💰</div>
+            <div className="text-2xl font-bold">${stats.totalRevenue}</div>
+            <div className="text-default-500 text-sm">Total Revenue</div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className="text-center p-6">
+            <div className="text-3xl mb-2">📊</div>
+            <div className="text-2xl font-bold">{stats.activeEvents}</div>
+            <div className="text-default-500 text-sm">Active Events</div>
+          </CardBody>
+        </Card>
+      </div>
 
-//             {/* Quick Actions */}
-//             <Card>
-//               <CardHeader><h2 className="text-xl font-bold">Quick Actions</h2></CardHeader>
-//               <CardBody className="flex flex-col gap-3">
-//                 <Button as={Link} to="/organizer/create-event" color="primary" variant="light">Create Event</Button>
-//                 <Button as={Link} to="/organizer/events" color="secondary" variant="light">Manage Events</Button>
-//                 <Button as={Link} to="/settings" color="default" variant="light">Settings</Button>
-//               </CardBody>
-//             </Card>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Recent Events */}
+          <Card>
+            <CardHeader className="flex justify-between">
+              <h2 className="text-xl font-bold">Recent Events</h2>
+              <Button as={Link} to="/dashboard/events" size="sm" variant="light" color="primary">
+                View All
+              </Button>
+            </CardHeader>
+            <CardBody>
+              <Table aria-label="Recent events">
+                <TableHeader>
+                  <TableColumn>EVENT</TableColumn>
+                  <TableColumn>DATE</TableColumn>
+                  <TableColumn>STATUS</TableColumn>
+                  <TableColumn>BOOKINGS</TableColumn>
+                  <TableColumn>ACTIONS</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {events.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <div className="text-center py-6">
+                          <p className="text-default-500 mb-4">No events created yet</p>
+                          <Button as={Link} to="/dashboard/events/create" color="primary">Create Event</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    events.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <img src={event.imageUrl} alt={event.name} className="w-10 h-10 rounded-lg object-cover" />
+                            <div>
+                              <div className="font-medium">{event.name}</div>
+                              <div className="text-default-500 text-xs">{event.location.city}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatDate(event.startDate)}</TableCell>
+                        <TableCell>
+                          <Chip size="sm" color={event.status === 'Active' ? 'success' : 'warning'} variant="flat">
+                            {event.status}
+                          </Chip>
+                        </TableCell>
+                        <TableCell>{event.bookingsCount}/{event.capacity}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button as={Link} to={`/events/${event.id}`} size="sm" variant="light">View</Button>
+                            <Button as={Link} to={`/dashboard/events/edit/${event.id}`} size="sm" variant="bordered">Edit</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardBody>
+          </Card>
+        </div>
 
-// export default OrganizerDashboard;
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader><h2 className="text-xl font-bold">Quick Actions</h2></CardHeader>
+            <CardBody className="flex flex-col gap-3">
+              <Button as={Link} to="/dashboard/events/create" color="primary">Create New Event</Button>
+              <Button as={Link} to="/dashboard/events" color="secondary" variant="light">Manage Events</Button>
+              <Button as={Link} to="/dashboard/bookings" color="default" variant="light">View Bookings</Button>
+            </CardBody>
+          </Card>
+
+          {/* Performance */}
+          <Card>
+            <CardHeader><h2 className="text-xl font-bold">Performance</h2></CardHeader>
+            <CardBody>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm">Bookings Rate</span>
+                    <span className="text-sm font-medium">{stats.bookingRate}%</span>
+                  </div>
+                  <div className="w-full bg-default-200 rounded-full h-2">
+                    <div className="bg-primary rounded-full h-2" style={{ width: `${stats.bookingRate}%` }}></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm">Revenue Target</span>
+                    <span className="text-sm font-medium">{stats.revenueProgress}%</span>
+                  </div>
+                  <div className="w-full bg-default-200 rounded-full h-2">
+                    <div className="bg-success rounded-full h-2" style={{ width: `${stats.revenueProgress}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrganizerDashboard;

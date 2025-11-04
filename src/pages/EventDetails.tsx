@@ -130,7 +130,8 @@ const EventDetails = () => {
         const reviewsResponse = await fetch(`${BASE_API_URL}/reviews/event/${eventId}`);
         console.log(reviewsResponse)
         const reviewsData = await reviewsResponse.json();
-        setReviews(reviewsData);
+        console.log(`Reviews data : ${JSON.stringify(reviewsData)}`);
+        setReviews(reviewsData.items || []);
         
       }
       fetchReviews().finally(() => setLoading(false));
@@ -152,10 +153,42 @@ const EventDetails = () => {
     setBookingOpen(true);
   };
 
-  const handlePurchase = (ticketId: string, quantity: number) => {
-    console.log('purchase:', ticketId, quantity);
-    setBookingOpen(false);
-    // navigate to checkout or call API
+  const handlePurchase = async (ticketId: string, quantity: number) => {
+    if (!event) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`${BASE_API_URL}/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+          ticketId: parseInt(ticketId),
+          quantity
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create booking');
+      }
+      
+      const data = await response.json();
+      setBookingOpen(false);
+      navigate('/dashboard/my-tickets', { 
+        state: { 
+          bookingSuccess: true,
+          bookingId: data.id
+        } 
+      });
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      alert('Failed to complete booking. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmitReview = (rating: number, comment: string) => {

@@ -3,26 +3,24 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Calendar,
-  BarChart2,
-  Ticket,
-  Mail,
-  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@heroui/button";
 import { Logo } from "../../Icons";
 
-const sidebarItems = [
-  { name: "Dashboard", icon: BarChart2, path: "/dashboard" },
-  { name: "Events", icon: Calendar, path: "/dashboard/events" },
-  { name: "Orders", icon: Ticket, path: "/dashboard/orders" },
-  { name: "Email Campaigns", icon: Mail, path: "/dashboard/campaigns" },
-  { name: "Settings", icon: Settings, path: "/dashboard/settings" },
-];
+interface SideBarItem {
+  name: string;
+  icon: React.ComponentType<any>; 
+  path: string 
+}
 
-const SidebarMenu = () => {
+interface SidebarMenuProps {
+  sideBarItems: SideBarItem[];
+}
+
+
+const SidebarMenu = ({sideBarItems}: SidebarMenuProps) => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -66,7 +64,7 @@ const SidebarMenu = () => {
 
       {/* Sidebar Navigation */}
       <nav className="flex flex-col gap-1 mt-4 px-2 flex-1">
-        {sidebarItems.map(({ name, icon: Icon, path }) => {
+        {sideBarItems.map(({ name, icon: Icon, path }) => {
           const isActive = location.pathname === path;
           return (
             <Link

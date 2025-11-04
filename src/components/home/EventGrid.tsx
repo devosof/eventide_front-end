@@ -1,9 +1,11 @@
 // src/components/home/EventGrid.tsx
 import {Spinner} from '@heroui/react';
 import EventCard, { EventCardProps } from '../events/EventCard';
+import { Event } from '@/api/types';
 
 interface EventGridProps {
   events: EventCardProps[];
+  // events: Event[];
   isLoading?: boolean;
 }
 
@@ -14,14 +16,7 @@ const EventGrid = ({
   return (
     <section className="py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <p className="text-default-500">{events.length} events found</p>
-          </div>
-
-
-        </div>
+       
 
         {/* Loading State */}
         {isLoading ? (

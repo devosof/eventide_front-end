@@ -59,6 +59,7 @@ export const DataTable: React.FC<DataTableProps> = ({
 
         <TableBody emptyContent={emptyContent}>
           {paginatedData.map((row, i) => (
+          
             <TableRow
               key={i}
               onClick={() => onRowClick?.(row)}

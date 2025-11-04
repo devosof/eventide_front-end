@@ -1,10 +1,13 @@
-// src/pages/Dashboard.tsx - SIMPLIFIED!
+// src/pages/Dashboard.tsx
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types/user.types';
-// import UserDashboard from '../components/dashboard/UserDashboard';
-// import OrganizerDashboard from '../components/dashboard/OrganizerDashboard';
+import UserDashboard from '../components/dashboard/UserDashboard';
+import OrganizerDashboard from '../components/dashboard/OrganizerDashboard';
+import { useEffect, useState } from 'react';
+import { eventService } from '../services/eventService';
+import { Event, Booking } from '@/api/types';
 
-// Mock data
+// Mock data for initial development
 const mockUserStats = {
   ticketsPurchased: 12,
   upcomingEvents: 3,
@@ -14,10 +17,11 @@ const mockUserStats = {
 
 const mockOrganizerStats = {
   totalEvents: 8,
-  activeEvents: 3,
+  totalBookings: 523,
   totalRevenue: 45230,
-  ticketsSold: 523,
-  averageRating: 4.7,
+  activeEvents: 3,
+  bookingRate: 75,
+  revenueProgress: 68,
 };
 
 const mockTickets = [
@@ -45,42 +49,142 @@ const mockTickets = [
 
 const mockEvents = [
   {
-    id: '1',
-    title: 'Summer Music Festival 2025',
-    image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400',
-    date: '2025-07-15T18:00:00',
-    ticketsSold: 250,
-    totalTickets: 500,
-    revenue: 21250,
-    status: 'active',
+    id: 1,
+    name: 'Summer Music Festival 2025',
+    imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400',
+    location: {
+      city: 'New York',
+      address: 'Central Park'
+    },
+    startDate: '2025-07-15T18:00:00',
+    status: 'Active',
+    bookingsCount: 250,
+    capacity: 500,
   },
   {
-    id: '2',
-    title: 'Food & Wine Expo',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400',
-    date: '2025-06-10T12:00:00',
-    ticketsSold: 150,
-    totalTickets: 300,
-    revenue: 0,
-    status: 'active',
+    id: 2,
+    name: 'Food & Wine Expo',
+    imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400',
+    location: {
+      city: 'San Francisco',
+      address: 'Convention Center'
+    },
+    startDate: '2025-06-10T12:00:00',
+    status: 'Active',
+    bookingsCount: 150,
+    capacity: 300,
   },
 ];
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [userEvents, setUserEvents] = useState<Event[]>([]);
+  const [userBookings, setUserBookings] = useState<Booking[]>([]);
+  const [organizerStats, setOrganizerStats] = useState(mockOrganizerStats);
+  const [userStats, setUserStats] = useState(mockUserStats);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
   const isOrganizer = user?.role === UserRole.ORGANIZER;
 
-  // TODO: Fetch real data from API
-  // const { data: stats } = useQuery(['dashboard-stats', user?.id]);
-  // const { data: tickets } = useQuery(['user-tickets', user?.id]);
-  // const { data: events } = useQuery(['organizer-events', user?.id]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        if (isOrganizer) {
+          // Fetch organizer events
+          const events = await eventService.fetchMyEvents();
+          setUserEvents(events || []);
+          
+          // Calculate organizer stats from real data
+          if (events && events.length > 0) {
+            const now = new Date();
+            const activeEvents = events.filter(
+              event => new Date(event.endDate) > now
+            );
+            
+            // Calculate total bookings (this is a placeholder - real implementation would need booking data)
+          let totalBookings = 0;
+          let totalRevenue = 0;
+          
+          // Update organizer stats with real data
+          setOrganizerStats({
+            totalEvents: events.length,
+            activeEvents: activeEvents.length,
+            totalBookings: totalBookings,
+            totalRevenue: totalRevenue,
+            bookingRate: 75, // Placeholder
+            revenueProgress: 68, // Placeholder - would need historical data to calculate
+          });
+          }
+        } else {
+          // Fetch user bookings
+          const bookings = await eventService.fetchMyBookings();
+          setUserBookings(bookings || []);
+          
+          // Calculate user stats from real data
+          if (bookings && bookings.length > 0) {
+            const now = new Date();
+            const upcomingBookings = bookings.filter(
+              booking => new Date(booking.event.startDate) > now
+            );
+            
+            // Calculate total spent
+             const totalSpent = bookings.reduce((sum, booking) => sum + booking.ticket.price, 0);
+            
+            // Update user stats with real data
+            setUserStats({
+              ticketsPurchased: bookings.length,
+              upcomingEvents: upcomingBookings.length,
+              totalSpent: totalSpent,
+              reviewsGiven: 0, // Placeholder - would need review data to calculate
+            });
+          }
+        }
+      } catch (err: any) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [isOrganizer, user?.id]);
+
+  // Format bookings data for UserDashboard
+   const formattedBookings = userBookings.map(booking => ({
+     id: booking.id.toString(),
+     eventTitle: booking.event.name,
+     eventImage: booking.event.images && booking.event.images.length > 0 
+       ? booking.event.images[0].imageUrl 
+       : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400',
+     date: booking.event.startDate,
+     location: `${booking.event.city || ''}`,
+     ticketType: booking.ticket.name,
+     quantity: 1, // Assuming 1 ticket per booking
+     status: booking.status.toLowerCase(),
+   }));
+
+  // Use real data when available, fallback to mock data
+  const events = userEvents.length > 0 ? userEvents : mockEvents;
+  const tickets = formattedBookings.length > 0 ? formattedBookings : mockTickets;
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading dashboard...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500 p-4">Error loading dashboard data. Please try again.</div>;
+  }
 
   if (isOrganizer) {
     return (
       <OrganizerDashboard
         user={user}
-        stats={mockOrganizerStats}
-        events={mockEvents}
+        stats={organizerStats}
+        events={events}
       />
     );
   }
@@ -88,8 +192,8 @@ const Dashboard = () => {
   return (
     <UserDashboard
       user={user}
-      stats={mockUserStats}
-      tickets={mockTickets}
+      stats={userStats}
+      tickets={tickets}
     />
   );
 };
