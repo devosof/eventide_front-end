@@ -14,6 +14,10 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
 } from "@heroui/react";
 import { Calendar, Edit2, Plus, Ticket, Trash2, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -31,7 +35,7 @@ export default function DashboardPage() {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { success } = useToast();
+  const { success, warning } = useToast();
 
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +56,7 @@ export default function DashboardPage() {
   const [userBookings, setUserBookings] = useState<Booking[]>([]);
 
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
+  const [deleteModal, setDeleteModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -122,19 +127,46 @@ export default function DashboardPage() {
   };
 
   // --- DELETE EVENT ---
-  const handleDelete = async (eventId: string | number) => {
-    if (!window.confirm("Are you sure you want to delete this event?")) return;
-    setDeletingId(eventId)
+  // const handleDelete = async (eventId: string | number) => {
+  //   // if (!window.confirm("Are you sure you want to delete this event?")) return;
+  //   setDeletingId(eventId);
+  //   setDeleteModal(true);
+
+  //   try {
+  //     const response = await api.delete(`${BASE_API_URL}/events/${eventId}`);
+  //     if (response.status === 200) {
+  //       setEvents((prev) => prev.filter((e) => e.id !== eventId));
+  //       success("Event deleted successfully");
+  //     }
+  //   } catch (error: any) {
+  //     console.error("Failed to delete event:", error);
+  //     setDeleteModal(false);
+  //     warning(error.response?.data?.message || "Failed to delete event");
+  //   } finally {
+  //     setDeletingId(null);
+  //   }
+  // };
+
+  // 1️⃣ When clicking the delete button, open modal & store id
+  const openDeleteModal = (eventId: string | number) => {
+    setDeletingId(eventId);
+    setDeleteModal(true);
+  };
+
+  // 2️⃣ Confirm deletion from inside modal
+  const confirmDelete = async () => {
+    if (!deletingId) return;
     try {
-      const response = await api.delete(`${BASE_API_URL}/events/${eventId}`);
+      const response = await api.delete(`${BASE_API_URL}/events/${deletingId}`);
       if (response.status === 200) {
-        setEvents((prev) => prev.filter((e) => e.id !== eventId));
+        setEvents((prev) => prev.filter((e) => e.id !== deletingId));
         success("Event deleted successfully");
       }
     } catch (error: any) {
       console.error("Failed to delete event:", error);
-      alert(error.response?.data?.message || "Failed to delete event");
+      warning(error.response?.data?.message || "Failed to delete event");
     } finally {
+      setDeleteModal(false);
       setDeletingId(null);
     }
   };
@@ -156,6 +188,35 @@ export default function DashboardPage() {
   // --- ORGANIZER DASHBOARD RENDER ---
   return (
     <div className="space-y-6">
+      {deleteModal && (
+        <>
+          <Modal isOpen={deleteModal} size="lg">
+            <ModalContent>
+              <ModalHeader>
+                <h2 className="text-2xl font-bold">Are you Sure</h2>
+              </ModalHeader>
+              <ModalBody>
+                <div className="space-y-4 text-center">
+                  <div>
+                    <p className="text-md text-default-500 mb-2">
+                      Do you really want to delete this event? This action
+                      cannot be undone.
+                    </p>
+                  </div>
+                </div>
+                <Button variant="light" onPress={() => {setDeleteModal(false)
+                  setDeletingId(null)
+                }}>
+                  Cancel
+                </Button>
+                <Button color="danger" onPress={confirmDelete}>
+                  Delete Anyway
+                </Button>
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+        </>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-600 mb-1">Welcome Back</p>
@@ -242,12 +303,13 @@ export default function DashboardPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button 
-                      as = {Link}
-                      to = {`event/${event.id}`}
-                      isIconOnly 
-                      size="sm" 
-                      variant="light">
+                      <Button
+                        as={Link}
+                        to={`event/${event.id}`}
+                        isIconOnly
+                        size="sm"
+                        variant="light"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </Button>
                       <Button
@@ -256,7 +318,7 @@ export default function DashboardPage() {
                         size="sm"
                         variant="light"
                         color="danger"
-                        onPress={() => handleDelete(event.id)}
+                        onPress={() => openDeleteModal(event.id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

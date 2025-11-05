@@ -43,8 +43,8 @@ export interface EventResponseDto {
   id: number
   name: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: Date | string
+  endDate: Date | string
   capacity: number
   organizer: {
     id: number
@@ -60,8 +60,9 @@ export interface EventResponseDto {
   }
   location: LocationDto & { id: number }
   images: { id: number; imageUrl: string }[]
-  tickets: { id: number; name: string; price: number; salesStartDate: Date; salesEndDate: Date }[]
+  tickets: { id: number; name: string; price: number; salesStartDate: Date | string; salesEndDate: Date | string }[]
   categories: { id: number; name: string }[]
+  bookings: number,
   createdAt: Date
 }
 

@@ -8,8 +8,8 @@ interface TicketType {
   id: number;
   name: string;
   price: number;
-  salesStartDate: string;
-  salesEndDate: string;
+  salesStartDate: Date | string;
+  salesEndDate: Date | string;
 }
 
 interface TicketsTabProps {

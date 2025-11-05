@@ -1,22 +1,21 @@
 // src/components/Event/ReviewsList.tsx
 import React from "react";
-import { Card, CardHeader, CardBody, Avatar } from "@heroui/react";
+import { Card, CardHeader, CardBody, Avatar, Button } from "@heroui/react";
 import { StarIcon } from "../Icons";
-
-interface Review {
-  id: string;
-  userName: string;
-  userAvatar?: string;
-  rating: number;
-  comment: string;
-  date: string;
-}
+import { Review } from "@/api/types";
+import { Edit, Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ReviewsListProps {
   reviews: Review[];
 }
 
 const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
+  const { user } = useAuth();
+
+  const handleEditReview = () => {};
+  const handleDeleteReview = () => {};
+
   if (!reviews?.length) {
     return (
       <div className="text-center text-default-500 py-6">
@@ -31,9 +30,15 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
         <Card key={rev.id} shadow="sm" className="rounded-2xl">
           <CardHeader className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Avatar src={rev.userAvatar} name={rev.userName} size="sm" />
+              <Avatar
+                src={rev.reviewer.name}
+                name={rev.reviewer.name}
+                size="sm"
+              />
               <div>
-                <p className="font-semibold text-default-900">{rev.userName}</p>
+                <p className="font-semibold text-default-900">
+                  {rev.reviewer.name}
+                </p>
                 <div className="flex gap-1 text-warning">
                   {[...Array(rev.rating)].map((_, i) => (
                     <StarIcon key={i} />
@@ -42,7 +47,28 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
               </div>
             </div>
             <span className="text-xs text-default-500">
-              {new Date(rev.date).toLocaleDateString()}
+              {new Date(rev.createdAt).toLocaleDateString()}
+              {user?.id == rev.reviewer.id && (
+                <div>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    onPress={handleEditReview}
+                  >
+                    <Edit size={16} />
+                  </Button>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    color="danger"
+                    onPress={handleDeleteReview}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              )}
             </span>
           </CardHeader>
 

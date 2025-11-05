@@ -8,15 +8,15 @@ interface TicketType {
   id: number;
   name: string;
   price: number;
-  salesStartDate: string;
-  salesEndDate: string;
+  salesStartDate: Date | string;
+  salesEndDate: Date | string;
 }
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   ticketTypes: TicketType[];
-  onPurchase: (ticketId: string, quantity: number) => void;
+  onPurchase: (ticketId: string) => void;
 }
 
 
@@ -45,10 +45,10 @@ export default function BookingModal({ isOpen, onClose, ticketTypes, onPurchase 
 
             {selectedTicket && (
               <>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium mb-2">Number of Tickets</label>
                   <Input type="number" min={1} max={10} value={quantity.toString()} onChange={(e:any) => setQuantity(Math.max(1, Number(e.target.value)||1))} />
-                </div>
+                </div> */}
 
                 <div className="p-4 bg-default-100 rounded-xl">
                   <div className="flex justify-between mb-2"><span>Subtotal</span><span className="font-semibold">${subtotal.toFixed(2)}</span></div>
@@ -62,7 +62,7 @@ export default function BookingModal({ isOpen, onClose, ticketTypes, onPurchase 
         </ModalBody>
         <ModalFooter>
           <Button variant="light" onPress={onClose}>Cancel</Button>
-          <Button color="primary" onPress={() => { if (selectedTicket) onPurchase(selectedTicket, quantity); }} isDisabled={!selectedTicket}>Proceed to Checkout</Button>
+          <Button color="primary" onPress={() => { if (selectedTicket) onPurchase(selectedTicket); }} isDisabled={!selectedTicket}>Proceed to Checkout</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

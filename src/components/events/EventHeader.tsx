@@ -3,6 +3,7 @@
 
 import { Chip } from '@heroui/react';
 import { StarIcon } from '../Icons';
+import { BookImageIcon, TicketIcon } from 'lucide-react';
 
 
 
@@ -33,7 +34,7 @@ export default function EventHeader({ title, category, tags = [], rating, review
       <div className="flex items-center gap-4 text-default-600">
         <div className="flex items-center gap-1"><StarIcon/> <span className="font-semibold">{rating}</span> <span className="text-sm">({reviewsCount} reviews)</span></div>
         <span>•</span>
-        <span>👥 {attendees} attending</span>
+        <span> <TicketIcon className='inline mr-2'/> {attendees} bookings done</span>
       </div>
     </div>
   );

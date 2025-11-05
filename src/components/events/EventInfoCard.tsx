@@ -6,8 +6,8 @@ import { CalendarIcon, LocationIcon, TicketIcon } from '../Icons';
 
 
 interface EventInfoCardProps {
-  date: string;
-  endDate?: string;
+  date: Date | string;
+  endDate?: Date | string;
   location: string;
   address?: string;
   availableTickets: number;

@@ -9,15 +9,9 @@ import {
 } from "@heroui/react";
 import ReviewsList from "./ReviewsList";
 import RatingSummary from "./RatingSummary";
+import { Review } from "@/api/types";
 
-interface Review {
-  id: string;
-  userName: string;
-  userAvatar?: string;
-  rating: number;
-  comment: string;
-  date: string;
-}
+
 
 interface ReviewsTabProps {
   reviews: Review[];

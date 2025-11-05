@@ -19,8 +19,13 @@ import BookingModal from '../components/events/BookingModal';
 import ReviewsTab from '../components/events/ReviewsTab';
 import OrganizerCard from '../components/events/OrganizerCard';
 import SidebarBookingCard from '../components/events/SidebarBookingCard';
-import {Event} from '@/api/types'
+import {Event, Review} from '@/api/types'
 import { LoaderCircle } from 'lucide-react';
+import { api } from '@/api/api';
+import { useToast } from '@/components/toast-provider';
+import { warn } from 'console';
+import { AxiosError } from 'axios';
+import { EventResponseDto } from '@/lib/dtos';
 // import { TicketType } from '@/types/event.types';
 
 
@@ -92,21 +97,39 @@ const BASE_API_URL = "http://localhost:3000";
 //   ],
 // };
 
+interface ReviewStats {
+  averageRating: number;
+  totalReviews: number;
+  ratings: {"1":0,"2":0,"3":0,"4":0,"5":0};
+}
+
+interface ReviewsResponse {
+  items: Review[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  stats: ReviewStats;
+}
+
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
   // state
-  const [event, setEvent] = useState<Event | null>(null);
-  const [reviews, setReviews] = useState([]);
+  const [event, setEvent] = useState<EventResponseDto | null>(null);
+  const [reviewsData, setReviewsData] = useState<ReviewsResponse | null>(null)
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [ticketQuantity, setTicketQuantity] = useState(1);
+  const [availableTickets, setAvailableTickets] = useState<number | 0>(0)
   const [loading, setLoading] = useState(false);
 
   const eventId: number = parseInt(id || '0', 10);
+
+  const {warning} = useToast()
 
   useEffect(()=> {
     // fetch event by id logic here
@@ -114,10 +137,12 @@ const EventDetails = () => {
     try {
       async function fetchEvent(){
         
-        const eventResponse = await fetch(`${BASE_API_URL}/events/${eventId}`);
+        const eventResponse = await api.get(`${BASE_API_URL}/events/${eventId}`);
         console.log(eventResponse)
-        const eventData = await eventResponse.json();
+        const eventData:EventResponseDto = await eventResponse.data;
+        const remainingTickets = eventData.capacity - eventData.bookings 
         setEvent(eventData);
+        setAvailableTickets(remainingTickets)
       }
       fetchEvent().finally(() => setLoading(false));
     } catch (error) {
@@ -131,6 +156,7 @@ const EventDetails = () => {
         console.log(reviewsResponse)
         const reviewsData = await reviewsResponse.json();
         console.log(`Reviews data : ${JSON.stringify(reviewsData)}`);
+        setReviewsData(reviewsData || null);
         setReviews(reviewsData.items || []);
         
       }
@@ -139,11 +165,12 @@ const EventDetails = () => {
       console.error("Error fetching reviews:", error);
       throw error;
     }
-
-
     
 
   }, [])
+
+
+
 
   const handleBookClick = () => {
     if (!isAuthenticated) {
@@ -153,29 +180,21 @@ const EventDetails = () => {
     setBookingOpen(true);
   };
 
-  const handlePurchase = async (ticketId: string, quantity: number) => {
+  const handlePurchase = async (ticketId: string) => {
     if (!event) return;
     
     try {
       setLoading(true);
-      const response = await fetch(`${BASE_API_URL}/bookings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
+      const response = await api.post(`${BASE_API_URL}/bookings`, {
           eventId: event.id,
           ticketId: parseInt(ticketId),
-          quantity
-        })
       });
       
-      if (!response.ok) {
+      if (!(response.status == 200)) {
         throw new Error('Failed to create booking');
       }
       
-      const data = await response.json();
+      const data = await response.data;
       setBookingOpen(false);
       navigate('/dashboard/my-tickets', { 
         state: { 
@@ -183,17 +202,36 @@ const EventDetails = () => {
           bookingId: data.id
         } 
       });
-    } catch (error) {
-      console.error('Error creating booking:', error);
-      alert('Failed to complete booking. Please try again.');
+    } catch (error:any) {
+      console.error('Error creating booking:', error?.response?.data.message);
+      setBookingOpen(false)
+      warning(error?.response.data.message)
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmitReview = (rating: number, comment: string) => {
+   const handleSubmitReview = async (rating: number, comment: string) => {
     console.log('submit review:', rating, comment);
+    setLoading(true)
     // call API or optimistic update
+    try {
+      const response = await api.post(`${BASE_API_URL}/reviews`,{
+        eventId,
+        rating,
+        comment
+      })
+      if(!(response.status == 200)){
+        warning(response.data?.message)
+        throw new Error(`Error in create review ${response.data?.message}`)
+      }
+    } catch (error: any) {
+      warning(error?.response?.data?.message)
+      throw new Error(`Failed to create review ${error?.response?.data?.message}`)
+      
+    } finally {
+      setLoading(false)
+    }
   };
 
   const handleRequireLogin = () => {
@@ -220,10 +258,9 @@ const EventDetails = () => {
             <EventHeader
               title={event ? event.name: 'N/A'}
               category={event?.categories.map(cat => cat.name).join(', ') || ''}
-              // tags={event.tags}
-              // rating={event.reviews}
-              // reviewsCount={event.reviewsCount}
-              // attendees={event.attendees}
+              rating={reviewsData?.stats.averageRating}
+              reviewsCount={reviewsData?.stats.totalReviews}
+              attendees={event?.bookings}
               isVerified={true}
             />
 
@@ -283,10 +320,11 @@ const EventDetails = () => {
           <div className="lg:col-span-1">
             <SidebarBookingCard
               price={event?.tickets ? Math.min(...event.tickets.map(t => t.price)) : 0}
-              availableTickets={100}
+              availableTickets={availableTickets}
               category={event?.categories ? event.categories.map(cat => cat.name).join(', ') : 'N/A'}
-              rating={reviews.length > 0 ? reviews.reduce((sum, r) => sum + r, 0) / reviews.length : 0}
+              rating={reviewsData? reviewsData.stats.averageRating : 0}
               onBook={handleBookClick}
+              endDate = {event? event.endDate: 'Date not found'}
               onWishlist={() => {
                 console.log('wishlist clicked');
               }}

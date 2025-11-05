@@ -9,6 +9,7 @@ interface SidebarBookingCardProps {
   availableTickets: number;
   category: string;
   rating: number;
+  endDate: Date | string;
   onBook: () => void;
   onWishlist?: () => void;
 }
@@ -18,9 +19,16 @@ const SidebarBookingCard: React.FC<SidebarBookingCardProps> = ({
   availableTickets,
   category,
   rating,
+  endDate,
   onBook,
   onWishlist,
 }) => {
+
+  const now = new Date();
+  const hasEnded = new Date(endDate) < now
+ 
+  console.log(`End Date: ${endDate}, now : ${now}`)
+  console.log("has ended ", hasEnded)
   return (
     <Card className="sticky top-24 shadow-xl">
       <CardBody className="space-y-4">
@@ -29,18 +37,20 @@ const SidebarBookingCard: React.FC<SidebarBookingCardProps> = ({
           <p className="text-4xl font-bold text-primary">${price}</p>
         </div>
 
+        {<>
         <Button
           color="primary"
           size="lg"
           className="w-full font-semibold"
           startContent={<TicketIcon />}
           onPress={onBook}
-          isDisabled={availableTickets === 0}
+          isDisabled={availableTickets === 0 || hasEnded}
         >
-          {availableTickets === 0 ? 'Sold Out' : 'Book Tickets'}
+          {hasEnded ? 'Event Has Ended' : availableTickets === 0 ? 'Sold Out' : 'Book Tickets'}
+          {}
         </Button>
-
-        <Button
+        </>}
+        {/* <Button
           variant="bordered"
           size="lg"
           className="w-full"
@@ -48,7 +58,7 @@ const SidebarBookingCard: React.FC<SidebarBookingCardProps> = ({
           onPress={onWishlist}
         >
           Add to Wishlist
-        </Button>
+        </Button> */}
 
         <Divider />
 
